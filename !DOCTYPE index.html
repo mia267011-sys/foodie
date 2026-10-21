@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南大食光：美食系統 Demo</title>
+    <!-- 引入 Tailwind CSS 讓介面更現代美觀 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen py-10 px-4">
+
+    <div class="max-w-xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+        <!-- 標題 -->
+        <h1 class="text-2xl font-bold text-center text-slate-800 mb-6">🎓 南大食光：美食系統 Demo</h1>
+
+        <!-- 篩選控制面板 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">選擇區域:</label>
+                <select id="zoneDropdown" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white text-slate-700 focus:ring-2 focus:ring-green-500 focus:outline-none">
+                    <option value="全部">全部</option>
+                    <option value="慶中街區">慶中街區</option>
+                    <option value="五妃街區">五妃街區</option>
+                    <option value="樹林街區">樹林街區</option>
+                    <option value="健康路區">健康路區</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">食物種類:</label>
+                <select id="categoryDropdown" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white text-slate-700 focus:ring-2 focus:ring-green-500 focus:outline-none">
+                    <option value="全部">全部</option>
+                    <option value="正餐">正餐</option>
+                    <option value="飲料">飲料</option>
+                    <option value="甜點冰品">甜點冰品</option>
+                    <option value="咖啡廳">咖啡廳</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 按鈕區 -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-8">
+            <button id="filterBtn" class="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-medium py-2.5 px-4 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                🔍 開始篩選
+            </button>
+            <button id="randomBtn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 px-4 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                🎲 今天吃什麼？
+            </button>
+        </div>
+
+        <!-- 結果輸出畫面 -->
+        <div id="outputArea" class="space-y-4">
+            <div class="text-center text-slate-400 py-8">請點擊上方按鈕開始尋找南大美食！</div>
+        </div>
+    </div>
+
+    <script>
+        // 南大周邊美食資料庫
+        const nantaiFoodDb = [
+            { name: "慶中街郭家綠豆湯", zone: "慶中街區", category: "甜點冰品", price: "銅板價", features: "手工粉圓超 Q，黑糖香氣濃鬱，店面很文青" },
+            { name: "阿鳳鍋燒意麵", zone: "五妃街區", category: "正餐", price: "銅板價", features: "炸雞腿飯跟燒肉飯是南方大學生的共同記憶，大份量！" },
+            { name: "波哥茶飲 (南大附近)", zone: "慶中街區", category: "飲料", price: "銅板價", features: "台南在地手搖飲" },
+            { name: "豆弄咖啡", zone: "五妃街區", category: "咖啡廳", price: "中高價", features: "環境安靜、有插座，適合帶著筆記本電腦去趕期末報告" },
+            { name: "老宅南", zone: "五妃街區", category: "正餐", price: "平價", features: "愛吃燒烤的必來" },
+            { name: "悠閒食堂", zone: "樹林街區", category: "正餐", price: "平價", features: "餐點選擇豐富、經濟實惠，店內裝潢復古文青" },
+            { name: "等一碗麵", zone: "健康路區", category: "正餐", price: "銅板價", features: "榨菜肉絲麵是招牌，私心推薦腿庫飯" },
+            { name: "操場對麵", zone: "五妃街區", category: "甜點冰品", price: "中高價", features: "排隊名店，須注意營業時間" },
+            { name: "懷舊小棧杏仁豆腐冰", zone: "五妃街區", category: "甜點冰品", price: "銅板價", features: "南大必吃，湯圓是可遇不可求的隱藏菜色" }
+        ];
+
+        // 取得過濾後的資料
+        function getFilteredData() {
+            const selectedZone = document.getElementById('zoneDropdown').value;
+            const selectedCategory = document.getElementById('categoryDropdown').value;
+
+            return nantaiFoodDb.filter(shop => {
+                const matchZone = (selectedZone === '全部' || shop.zone === selectedZone);
+                const matchCategory = (selectedCategory === '全部' || shop.category === selectedCategory);
+                return matchZone && matchCategory;
+            });
+        }
+
+        // 建立美食卡片 HTML
+        function createCardHtml(shop, titlePrefix = "") {
+            return `
+                <div class="border-2 border-emerald-500 rounded-xl p-4 bg-emerald-50/30 shadow-sm relative">
+                    ${titlePrefix ? `<div class="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded w-fit mb-2">${titlePrefix}</div>` : ''}
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">${shop.name}</h3>
+                    <p class="text-sm text-slate-600 mb-2">
+                        📍 區域：<b>${shop.zone}</b> | 類別：<b>${shop.category}</b> | 💰 價位：<b>${shop.price}</b>
+                    </p>
+                    <p class="text-sm text-slate-700 italic bg-white/70 p-2 rounded border border-emerald-100">
+                        💬 小組推薦：${shop.features}
+                    </p>
+                </div>
+            `;
+        }
+
+        // 點擊篩選按鈕
+        document.getElementById('filterBtn').addEventListener('click', () => {
+            const outputArea = document.getElementById('outputArea');
+            const res = getFilteredData();
+
+            outputArea.innerHTML = '';
+
+            if (res.length === 0) {
+                outputArea.innerHTML = `<div class="text-center text-rose-500 py-6 font-medium">❌ 目前條件下沒有符合的南大美食，換個條件試試吧！</div>`;
+                return;
+            }
+
+            let html = `<p class="text-sm font-semibold text-slate-600 mb-3">✨ 為您找到 ${res.length} 間符合條件的南大美食：</p>`;
+            res.forEach(shop => {
+                html += createCardHtml(shop);
+            });
+            outputArea.innerHTML = html;
+        });
+
+        // 點擊隨機按鈕
+        document.getElementById('randomBtn').addEventListener('click', () => {
+            const outputArea = document.getElementById('outputArea');
+            const res = getFilteredData();
+
+            outputArea.innerHTML = '';
+
+            if (res.length === 0) {
+                outputArea.innerHTML = `<div class="text-center text-rose-500 py-6 font-medium">❌ 抽不到餐廳！因為目前的篩選條件下沒有任何美食。</div>`;
+                return;
+            }
+
+            const luckyShop = res[Math.floor(Math.random() * res.length)];
+            outputArea.innerHTML = createCardHtml(luckyShop, "🎲 命中註定吃這家！");
+        });
+    </script>
+</body>
+</html>
